@@ -175,7 +175,7 @@ describe('MandrillTransport', function() {
           name: 'Patrick Star',
           address: 'patrick@bikini.bottom'
         }
-      ]
+      ];
 
       payload.data.cc = [
         {
@@ -183,7 +183,7 @@ describe('MandrillTransport', function() {
           address: 'squidward@bikini.bottom'
         },
         'Sandy Cheeks <sandy@bikini.bottom>'
-      ]
+      ];
 
       payload.data.bcc = [
         'Mr. Krabs <krabs@bikini.bottom>',
@@ -196,7 +196,7 @@ describe('MandrillTransport', function() {
       payload.data.from = {
         name: 'Gary the Snail',
         address: 'gary@bikini.bottom'
-      }
+      };
 
       status = 'sent';
 
