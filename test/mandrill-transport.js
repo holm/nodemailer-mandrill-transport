@@ -14,11 +14,9 @@ describe('MandrillTransport', function() {
     expect(transport.version).to.equal(packageData.version);
   });
 
-  describe('#send', function(done) {
-    var transport = mandrillTransport();
-    var client = transport.mandrillClient;
-
-    var payload = {
+  var payload;
+  beforeEach(function () {
+    payload = {
       data: {
         to: 'SpongeBob SquarePants <spongebob@bikini.bottom>, Patrick Star <patrick@bikini.bottom>',
         cc: 'Squidward Tentacles <squidward@bikini.bottom>, Sandy Cheeks <sandy@bikini.bottom>',
@@ -29,6 +27,11 @@ describe('MandrillTransport', function() {
         html: '<p>Meow!</p>'
       }
     };
+  });
+
+  describe('#send', function(done) {
+    var transport = mandrillTransport();
+    var client = transport.mandrillClient;
 
     var status;
 
@@ -132,26 +135,6 @@ describe('MandrillTransport', function() {
       });
     });
 
-    it('can override Mandrill API options', function(done) {
-      payload.data.mandrillOptions = {
-        message: {
-          preserve_recipients: true
-        }
-      };
-
-      sendStub.restore();
-      sendStub = sinon.stub(client.messages, 'send', function(data, resolve) {
-        expect(data.message.preserve_recipients).to.be.true;
-        resolve([{ _id: 'fake-id', status: 'sent' }]);
-      });
-
-      transport.send(payload, function(err) {
-        expect(err).to.not.exist;
-        expect(sendStub.calledOnce).to.be.true;
-        done();
-      });
-    });
-
     it('use a mandrill template', function(done) {
       payload.data.mandrillOptions = {
         template_name: 'krusty-krab-newsletter'
@@ -202,12 +185,56 @@ describe('MandrillTransport', function() {
 
       transport.send(payload, function(err, info) {
         expect(err).to.not.exist;
-        expect(sendStub.calledOnce).to.be.false;
+        expect(sendStub.calledOnce).to.be.true;
         expect(info.accepted.length).to.equal(1);
         expect(info.rejected.length).to.equal(0);
         expect(info.messageId).to.equal('fake-id');
         done();
       });
     })
+
+
+    for (const emptyTarget of ['to', 'cc', 'bcc']) {
+      it('allow empty ' + emptyTarget, function (done) {
+        if (emptyTarget === 'to') {
+          payload.cc += ', ' + payload[emptyTarget];
+        } else {
+          payload.to += ', ' + payload[emptyTarget];
+        }
+        payload[emptyTarget] = undefined;
+
+
+        status = 'sent';
+
+        transport.send(payload, function(err, info) {
+          expect(err).to.not.exist;
+          expect(sendStub.calledOnce).to.be.true;
+          expect(info.accepted.length).to.equal(1);
+          expect(info.rejected.length).to.equal(0);
+          expect(info.messageId).to.equal('fake-id');
+          done();
+        });
+      });
+    }
+
+    it('can override Mandrill API options', function(done) {
+      payload.data.mandrillOptions = {
+        message: {
+          preserve_recipients: true
+        }
+      };
+
+      sendStub.restore();
+      sendStub = sinon.stub(client.messages, 'send', function(data, resolve) {
+        expect(data.message.preserve_recipients).to.be.true;
+        resolve([{ _id: 'fake-id', status: 'sent' }]);
+      });
+
+      transport.send(payload, function(err) {
+        expect(err).to.not.exist;
+        expect(sendStub.calledOnce).to.be.true;
+        done();
+      });
+    });
   });
 });
